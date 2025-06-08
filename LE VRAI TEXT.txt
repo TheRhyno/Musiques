@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rhynozic</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #121212;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header {
+      padding: 1rem;
+      background-color: #1db954;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      overflow: hidden;
+    }
+    /* Sidebar playlists */
+    .playlists-sidebar {
+      width: 160px;
+      background: #181818;
+      overflow-y: auto;
+      padding: 1rem 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #333;
+    }
+    .playlists-sidebar div {
+      padding: 0.8rem 1rem;
+      cursor: pointer;
+      user-select: none;
+      border-left: 4px solid transparent;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .playlists-sidebar div:hover {
+      background: #282828;
+    }
+    .playlists-sidebar div.active {
+      background: #1db954;
+      color: #000;
+      border-left-color: #1db954;
+      font-weight: bold;
+    }
+
+    /* Playlist des morceaux */
+    .playlist-container {
+      width: 320px;
+      background: #181818;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+    }
+    .search-input {
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 4px;
+      background: #282828;
+      color: #fff;
+    }
+    .track {
+      padding: 0.5rem;
+      border-bottom: 1px solid #333;
+      cursor: pointer;
+      user-select: none;
+    }
+    .track:hover, .track.active {
+      background: #1db954;
+      color: #000;
+    }
+    .player {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+    }
+    .thumbnail {
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    #now-playing {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+
+    .controls {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .controls button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0 8px;
+      user-select: none;
+    }
+    .controls button.active {
+      color: #1db954;
+    }
+    .progress-bar {
+      width: 80%;
+      height: 5px;
+      background: #333;
+      margin-top: 1rem;
+      position: relative;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    .progress {
+      height: 5px;
+      background: #1db954;
+      width: 0;
+      border-radius: 3px;
+    }
+    .time-info {
+      width: 80%;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+    .volume {
+      margin-top: 1rem;
+      width: 80%;
+    }
+/* Ajoute ceci à la fin du <style> existant */
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .playlists-sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-right: none;
+    border-bottom: 1px solid #333;
+    justify-content: center;
+  }
+
+  .playlists-sidebar div {
+    flex: 1 1 50%;
+    text-align: center;
+    border-left: none;
+    border-bottom: 4px solid transparent;
+  }
+
+  .playlists-sidebar div.active {
+    border-bottom-color: #1db954;
+  }
+
+  .playlist-container {
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 0.5rem;
+  }
+
+  .player {
+    width: 100%;
+    padding: 1rem 0.5rem;
+  }
+
+  .thumbnail {
+    width: 150px;
+    height: 150px;
+  }
+
+  .controls {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .progress-bar, .time-info, .volume, #lyrics {
+    width: 95%;
+  }
+
+  #lyrics {
+    font-size: 0.9rem;
+    max-height: 120px;
+  }
+}
+
+
+#lyrics {
+  margin-top: 1rem;
+  max-width: 80%;
+  max-height: 150px;      /* Limite la hauteur */
+  overflow-y: auto;       /* Active le scroll si nécessaire */
+  text-align: center;
+  white-space: pre-wrap;
+  padding: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+}
+
+
+  </style>
+</head>
+<body>
+  <header>TheRhyno's song</header>
+  <div class="container">
+    <div class="playlists-sidebar" id="playlistsSidebar">
+      <!-- Playlists seront ajoutées ici -->
+    </div>
+    <div class="playlist-container">
+      <input id="searchInput" class="search-input" placeholder="Rechercher dans la playlist..." />
+      <div id="playlist"></div>
+    </div>
+    <div class="player">
+      <img id="thumbnail" class="thumbnail" src="https://i.pinimg.com/736x/47/4c/57/474c57724fce98d50251cc5c2c463849.jpg" />
+      <div id="now-playing">Choisissez un morceau</div>
+      <div class="controls">
+        <button onclick="prevTrack()" title="Précédent">⏮️</button>
+        <button onclick="togglePlay()" id="playPauseBtn" title="Play/Pause">▶️</button>
+        <button onclick="nextTrack()" title="Suivant">⏭️</button>
+        <button onclick="toggleShuffle()" id="shuffleBtn" title="Shuffle">🔀</button>
+        <button onclick="toggleRepeat()" id="repeatBtn" title="Repeat">🔁</button>
+      </div>
+      <div class="progress-bar" onclick="seek(event)">
+        <div class="progress" id="progress"></div>
+      </div>
+      <div class="time-info">
+        <span id="currentTime">0:00</span>
+        <span id="duration">0:00</span>
+      </div>
+<div id="lyrics"></div>
+
+
+    </div>
+  </div>
+  <audio id="audio"></audio>
+
+  <script>
+    // Playlists définies
+    const playlists = {
+      "JUL": [
+        {
+          title: "Bwo - Jul",
+          url: "https://files.catbox.moe/8vszmw.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b273f3e8990652f0a336ae55f26a",
+    lyrics: `
+Paroles
+
+[00:00.00]🎵
+[00:07.00]Appelle-moi L'ovni, la lettre ou le J
+[00:11.00]Asics, cheveux blancs, et survêt' jdid
+[00:14.00]Il m' régale, le couz'
+[00:16.00]Sous RSA, il se vide des Grey Goose
+[00:18.00]J'les baise à tous, t'inquiète pas besoin d'être 12
+[00:22.00]Opinel 12, caché dans la Canada Goose
+[00:26.00]J'ai fait l'album à la plaza
+[00:27.50]J'vais faire danser ton oncle et ta couz'
+[00:30.00]Cherche plus, c'est JuL
+[00:32.00]L'ovni, ouais d'Or et de Platine
+[00:33.50]Que ça chante, que sa rappe
+[00:36.00]Pour l'buzz et pour les gadjis
+[00:37.30]J'mets l'but, j'fais pas de salades
+[00:39.50]Gaucher comme Mohammed Salah
+[00:41.00]Pas d'équipes, pas de bras longs
+[00:43.00]J'fais dormir le Staffie dans le salon
+[00:45.50]J'dors pas, écoute, là j'fais parler le talent
+[00:49.00]Et ça m'dégoûte, ça m'dégoûte
+[00:51.00]Y a que des fils de putes
+[00:55.00]J'me mets sur béquille latérale
+Tu m'critiques, tu veux m'faire la Ze'
+Tu vas t'prendre un coup de casque intégral
+Au bar, ça s'en bats les couilles
+Aux toilettes s'en met dans l'nazou
+Timide et t'as pas un sous
+Tu vas en finir en rûte sur Badoo
+J'ai pas l'time, je nique tout
+Si t'as parlé de moi on s'en fout
+Chez moi c'est l'cœur avant tout
+Parce que le bon Dieu voit tout
+Putain, que j'croise la Mondeo
+Cet été, j'me sors la Honda
+T'es bizarre, j'sais pas ce qu'j't'ai fait, oh
+J'croyais qu't'étais la Honda
+Ne rejette pas la faute sur tout le monde
+C'est pas la mienne si tu montes pas
+Y a bien plus grave dans le monde
+N'oublie pas c'est Dieu qui donne ou pas
+Tu vois, tchoupe-pas faut arrêter
+Je sais que tu sais que je le sais
+T'as blessé, tu seras blessé
+T'as rabaissé, tu seras rabaissé
+Visière, fumée, j'passe entre les voitures au Jarret
+Elle m'a mis un carré-croix
+Pourtant elle m'a pisté toute la soirée
+Le TDM, j'le mets droit, sur Rivoire et Carret
+J'suis plutôt, Tokyo, avec sa coupe au carré
+Ça veut tacler le commissaire
+La jober comme Professor
+J'suis à l'aise dans le Golf 7 R
+Dans l'Audi ou l'Merco Kompressor
+Tu t'moques de moi toute l'année
+J't'envoie en final comme Rolando
+Si j'veux avec les sous qu'j'ai
+Demain, j'monte un commando
+Le couz', arrête, ça sert à rien d'me faire le costaud
+J'ai vu des choses que j'dirais pas
+Appelle-moi Commandant Cousteau
+Le couz', arrête, ça sert à rien d'me faire le costaud
+J'ai vu des choses que j'dirais pas
+Appelle-moi Commandant Cousteau
+J'vois l'couz' il fait un pétard
+Choqué, il sait faire d'la guitare
+La marche arrière est cassée
+On connaît plus l'demi-tour
+Plaque chauffante ça coupe des demi
+En bas ça bande en deux et demi
+Ça mise sa vie au Rami
+Après ça s'plaint de ramer
+Appelle-moi, L'ovni, la lettre ou le J
+Asics, cheveux blancs, et survêt' jdid
+J'troue les baffes, j'ai la rage
+Plus le time, je vois rouge
+J'nique tout et je m'arrache
+J'te fais le signe JuL au feu rouge
+Le couz' les bouts tu les fais rêche
+J'reviens demain c'est R
+Y a le secteur sous CR
+Ils m'ont trahi c'est R, c'est R
+J'vais les baiser les putos, les putas
+Ils m'ont trahi c'est R, c'est R
+J'vais les baiser les putos, les putas
+Ils m'ont trahi c'est R, c'est R
+J'vais les baiser les putos, les putas
+Ils m'ont trahi c'est R, c'est R
+J'vais tous les choquer, les putos, les putas
+J'vais tous les choquer, les putos, les putas
+J'vais tous les choquer, les putos, les putas
+Ne sous-estime ma faiblesse car bientôt elle sera redoutable
+Appelle-moi L'ovni, la lettre ou le J
+Appelle-moi L'ovni, la lettre ou le J
+Appelle-moi L'ovni, la lettre ou le J
+`
+        },
+
+
+
+        {
+          title: "JCVD - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/Jul%20-%20JCVD%20Clip%20Officiel%202019.mp3",
+          img: "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/7f/06/c5/7f06c536-a0e2-b9b9-ac42-201a0c7b8291/cover.jpg/600x600bf-60.jpg",
+    lyrics: `
+[00:00.00]Ça veut l'port d'armes
+[00:00.00]Et les gros bras à Jean Claude Van Damme
+[00:00.00]J'fume la beuh d'Amsterdam
+Celle qui est bonne, qui t'monte au crâne
+Tu veux de la bonne, le petit t'écrase deux Doliprane
+Si dans le bis tu déconnes, le petit reviendra armé en bécane
+Moi j'fume des tonnes (nanana) et je déconne (nanana)
+J'sais que je vous étonne (nanana) encore un album (nanana)
+J'suis plus dans la zone (nanana) j'me suis taillé (nanana)
+Mi corazon (nanana) je m'en vais sa y est (nanana)
+Pochon dans le sac Quechua, claquettes coupe au séchoir
+J'ai envie de rôder le soir, mais dans la vie faut faire des choix
+Seront-ils la à mon décès? j'ai fait des sous ça ma laissé
+Ça ma haï, rabaissé, a en mériter des fessées
+Tu me racontes tes 'blèmes, j'ai d'autres soucis
+Ils m'en veulent, ils m'aiment, c'est la jalousie
+Ils récoltent ce qu'ils sèment, j'suis comme eux donc moi aussi
+Dis-moi ce qu'il te gêne, je dis ce que je vis
+Je dis c'que je vis
+Je dis c'que je vis
+Je dis c'que je vis
+Ça veut l'port d'armes
+Les gros bras à Jean Claude Van Damme
+J'fume la beuh d'Amsterdam
+Celle qui est bonne, qui t'monte au crâne
+Ça veut l'port d'armes
+Et les gros bras à Jean Claude Van Damme
+J'fume la beuh d'Amsterdam
+Celle qui est bonne, qui t'monte au crâne
+Des fois je passe par le secteur, ils me reviennent les souvenirs
+Les temps pleins dans le quartier, avant de voir les sous venir
+J'ai pas le salaire d'un joueur de ballon
+J'ai pas encore deux tigres dans le salon
+J'ai pas changé je représente toujours
+Tarascon, La Farlede, Baumettes, Luynes, Salon
+Et en promenade sa travaille les pecs
+Rien qu'du parlu ça arrache des têtes
+Suffit d'une balance et le maton les pètent
+Suffit d'une balance et le maton les pètent
+Tu me racontes tes 'blèmes, j'ai d'autres soucis
+Ils m'en veulent, ils m'aiment, c'est la jalousie
+Ils récoltent ce qu'ils sèment, j'suis comme eux donc moi aussi
+Dis-moi ce qui te gêne, je dis ce que je vis
+Je dis c'que je vis
+Je dis c'que je vis
+Je dis c'que je vis
+Ça veut l'port d'armes
+Les gros bras à Jean Claude Van Damme
+J'fume la beuh d'Amsterdam
+Celle qui est bonne, qui t'monte au crâne
+Ça veut l'port d'armes
+Et les gros bras à Jean Claude Van Damme
+J'fume la beuh d'Amsterdam
+Celle qui est bonne, qui t'monte au crâne
+Moi j'fume des tonnes (nanana) et je deconne (nanana)
+J'sais que je vous étonne (nanana) encore un album (nanana)
+J'suis plus dans la zone (nanana) j'me suis taillé (nanana)
+Mi corazon (nanana) je m'en vais ça y est (nanana)
+Tu me racontes tes 'blèmes, j'ai d'autres soucis
+Ils m'en veulent, ils m'aiment, c'est la jalousie
+Ils récoltent ce qu'ils sèment, j'suis comme eux donc moi aussi
+Dis-moi ce qui te gêne, je dis ce que je vis
+Je dis c'que je vis
+Je dis c'que je vis
+Je dis c'que je vis
+`
+        },
+        {
+          title: "Phénoménal - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20-%20Ph%C3%A9nom%C3%A9nal%20Clip%20officiel%202025.mp3",
+          img: "https://i1.sndcdn.com/artworks-0zhzsajb0FOKiSR9-ByUnjw-t500x500.jpg",
+    lyrics: `
+Paroles
+
+Ju-Ju-Jul
+Ah, ah, ah, ah, ah, ah
+Ju-Ju-Jul
+Eh, eh, eh
+
+ls veulent m'remplacer par l'IA 
+`
+        },
+        {
+          title: "Alors la zone - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20-%20Alors%20la%20zone%20_%20Clip%20Officiel%20_%202021.mp3",
+          img: "https://i1.sndcdn.com/artworks-95xHCDsGNFd81BVL-UEHYwQ-t500x500.jpg",
+    lyrics: `
+Paroles
+
+La zone en personne, la zone en personne
+etc...
+`
+        },
+        {
+          title: "Avant la douane - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JUL%20-%20AVANT%20LA%20DOUANE%20ALBUM%20GRATUIT%20%5B30%5D%20FINAL%202016.mp3",
+          img: "https://cdn-images.dzcdn.net/images/cover/c6f6f11a1d8549830ac2f311e11cee6d/0x1900-000000-80-0-0.jpg",
+    lyrics: `
+Paroles
+
+La zone en personne, la zone en personne
+etc...
+`
+        },
+        {
+          title: "Amnésia - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/Amn%C3%A9sia.mp3",
+          img: "https://i1.sndcdn.com/artworks-WE4PYbLMftzs-0-t500x500.jpg",
+    lyrics: `
+Paroles
+
+La zone en personne, la zone en personne
+etc...
+`
+        },
+        {
+          title: "Pow Pow - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20-%20Pow%20Pow%20Clip%20officiel%202019.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b273a6fa48d12eea7e21d9f46373",
+    lyrics: `
+Paroles
+
+La zone en personne, la zone en personne
+etc...
+`
+        },
+        {
+          title: "En Y - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/En%20Y.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b273e66ddf6698d0e6defba20124",
+    lyrics: `
+Paroles
+
+La zone en personne, la zone en personne
+etc...
+`
+        },
+        {
+          title: "On se régale - Jul Ft Bengous",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20-%20On%20se%20r%C3%A9gale%20Ft%20Bengous%20Album%20gratuit%20vol.5%20%5B13%5D%202019.mp3",
+          img: "https://i1.sndcdn.com/artworks-1Cdi1pxam3Sb-0-t500x500.jpg",
+    lyrics: `
+Paroles
+
+La zone en personne, la zone en personne
+etc...
+`
+        },
+        {
+          title: "Wesh alors - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JUL%20-%20WESH%20ALORS%20CLIP%20OFFICIEL%202015.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b273e66ddf6698d0e6defba20124",
+    lyrics: `
+Paroles
+
+La zone en personne, la zone en personne
+etc...
+`
+        },
+        {
+          title: "Ibiza - Jul Ft Jimmy Sax",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20Ft%20Jimmy%20Sax%20IBIZA%20Clip%20officiel%202019.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b273a6fa48d12eea7e21d9f46373",
+    lyrics: `
+Paroles
+`
+        },
+        {
+          title: "La faille - Jul",
+          url: "https://files.catbox.moe/244ljm.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b2735a5a16ac8fe5ac8514ef436a",
+    lyrics: `
+Paroles
+`
+        },
+
+        {
+          title: "Dans ma paranoïa - Jul",
+          url: "https://files.catbox.moe/665pjl.mp3",
+          img: "https://m.media-amazon.com/images/I/71Tb8nTizfL._UF1000,1000_QL80_.jpg",
+    lyrics: `
+Paroles
+`
+        },
+
+        {
+          title: "La Bandite - Jul",
+          url: "mp3",
+          img: "https://i1.sndcdn.com/artworks-Z3oiNWs5BxPk-0-t500x500.jpg",
+    lyrics: `
+Paroles
+`
+        },
+
+        {
+          title: "COUCOU",
+          url: "mp3",
+          img: "Miniature",
+    lyrics: `
+Paroles
+`
+        },
+
+        {
+          title: "COUCOU",
+          url: "mp3",
+          img: "Miniature",
+    lyrics: `
+Paroles
+`
+        },
+
+        {
+          title: "COUCOU",
+          url: "mp3",
+          img: "Miniature",
+    lyrics: `
+Paroles
+`
+        },
+
+        {
+          title: "COUCOU",
+          url: "mp3",
+          img: "Miniature",
+    lyrics: `
+Paroles
+`
+        }
+
+
+
+      ],
+      "Electronique": [
+        {
+          title: "Lounge Beats",
+          url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+          img: "https://picsum.photos/id/238/200/200"
+        },
+        {
+          title: "Soft Electro",
+          url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+          img: "https://picsum.photos/id/239/200/200"
+        }
+      ]
+    };
+
+    let currentPlaylistName = Object.keys(playlists)[0];
+    let currentPlaylist = playlists[currentPlaylistName];
+    let filteredPlaylist = [...currentPlaylist];
+    let currentTrack = 0;
+    let isShuffle = false;
+    let isRepeat = false;
+
+
+
+let lyricsData = [];
+let lyricsContainer = document.getElementById("lyrics");
+
+function parseLyrics(lrc) {
+  lyricsData = [];
+  const lines = lrc.trim().split("\n");
+  for (let line of lines) {
+    const match = line.match(/\[(\d{2}):(\d{2}\.\d{2})\](.*)/);
+    if (match) {
+      const time = parseInt(match[1]) * 60 + parseFloat(match[2]);
+      const text = match[3];
+      lyricsData.push({ time, text });
+    }
+  }
+}
+
+function displayLyrics(index) {
+  const track = filteredPlaylist[index];
+  if (!track.lyrics) {
+    lyricsContainer.innerText = "Aucune parole disponible.";
+    return;
+  }
+  parseLyrics(track.lyrics);
+  lyricsContainer.innerText = ""; // reset affichage
+}
+
+
+
+
+
+
+    const audio = document.getElementById("audio");
+    const progress = document.getElementById("progress");
+    const nowPlaying = document.getElementById("now-playing");
+    const thumbnail = document.getElementById("thumbnail");
+    const playlistDiv = document.getElementById("playlist");
+    const playlistsSidebar = document.getElementById("playlistsSidebar");
+    const searchInput = document.getElementById("searchInput");
+    const playPauseBtn = document.getElementById("playPauseBtn");
+    const shuffleBtn = document.getElementById("shuffleBtn");
+    const repeatBtn = document.getElementById("repeatBtn");
+    const currentTimeEl = document.getElementById("currentTime");
+    const durationEl = document.getElementById("duration");
+
+    // Affiche la sidebar playlists
+    function displayPlaylistsSidebar() {
+      playlistsSidebar.innerHTML = "";
+      Object.keys(playlists).forEach(name => {
+        const div = document.createElement("div");
+        div.textContent = name;
+        div.classList.toggle("active", name === currentPlaylistName);
+        div.onclick = () => {
+          if(name !== currentPlaylistName) {
+            currentPlaylistName = name;
+            currentPlaylist = playlists[currentPlaylistName];
+            filteredPlaylist = [...currentPlaylist];
+            currentTrack = 0;
+            searchInput.value = "";
+            displayPlaylistsSidebar();
+            displayPlaylist();
+            playTrack(currentTrack);
+          }
+        };
+        playlistsSidebar.appendChild(div);
+      });
+    }
+
+const progressBar = document.querySelector('.progress-bar');
+const progressEl = document.getElementById('progress');
+let isDragging = false;
+
+progressBar.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  seekFromEvent(e);
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (isDragging) {
+    seekFromEvent(e);
+  }
+});
+
+document.addEventListener('mouseup', () => {
+  isDragging = false;
+});
+
+function seekFromEvent(e) {
+  const rect = progressBar.getBoundingClientRect();
+  const percent = Math.min(Math.max(0, (e.clientX - rect.left) / rect.width), 1);
+  audio.currentTime = percent * audio.duration;
+}
+
+
+    // Afficher la playlist (filtered)
+    function displayPlaylist() {
+      playlistDiv.innerHTML = "";
+      filteredPlaylist.forEach((track, index) => {
+        const div = document.createElement("div");
+        div.className = "track";
+        if(index === currentTrack) div.classList.add("active");
+        div.innerText = track.title;
+        div.onclick = () => {
+          currentTrack = index;
+          playTrack(currentTrack);
+          updatePlaylistHighlight();
+        };
+        playlistDiv.appendChild(div);
+      });
+    }
+
+    function updatePlaylistHighlight() {
+      const tracks = playlistDiv.querySelectorAll(".track");
+      tracks.forEach((t, i) => {
+        t.classList.toggle("active", i === currentTrack);
+      });
+    }
+
+    function playTrack(index) {
+      currentTrack = index;
+      audio.src = filteredPlaylist[index].url;
+      nowPlaying.innerText = `🎵 ${filteredPlaylist[index].title}`;
+      thumbnail.src = filteredPlaylist[index].img;
+      audio.play();
+      playPauseBtn.textContent = "⏸️";
+  // Parse et affiche les paroles (reset)
+  if (filteredPlaylist[index].lyrics) {
+    parseLyrics(filteredPlaylist[index].lyrics);
+    displayLyricsLine(0);  // afficher la première ligne au départ
+  } else {
+    lyricsContainer.innerText = "Aucune parole disponible.";
+  }
+}
+
+
+
+    function togglePlay() {
+      if (!audio.src) return;
+      if (audio.paused) {
+        audio.play();
+        playPauseBtn.textContent = "⏸️";
+      } else {
+        audio.pause();
+        playPauseBtn.textContent = "▶️";
+      }
+    }
+
+    function nextTrack() {
+      if (isShuffle) {
+        currentTrack = Math.floor(Math.random() * filteredPlaylist.length);
+      } else {
+        currentTrack = (currentTrack + 1) % filteredPlaylist.length;
+      }
+      playTrack(currentTrack);
+      updatePlaylistHighlight();
+displayLyrics(index);
+    }
+
+    function prevTrack() {
+      if (isShuffle) {
+        currentTrack = Math.floor(Math.random() * filteredPlaylist.length);
+      } else {
+        currentTrack = (currentTrack - 1 + filteredPlaylist.length) % filteredPlaylist.length;
+      }
+      playTrack(currentTrack);
+      updatePlaylistHighlight();
+displayLyrics(index);
+    }
+
+    function toggleShuffle() {
+      isShuffle = !isShuffle;
+      shuffleBtn.classList.toggle("active", isShuffle);
+    }
+
+    function toggleRepeat() {
+      isRepeat = !isRepeat;
+      repeatBtn.classList.toggle("active", isRepeat);
+    }
+
+    function setVolume(value) {
+      audio.volume = value;
+    }
+
+    function seek(event) {
+      const bar = event.currentTarget;
+      const clickPos = event.offsetX / bar.offsetWidth;
+      audio.currentTime = clickPos * audio.duration;
+    }
+
+    audio.ontimeupdate = () => {
+      if (audio.duration) {
+        const percent = (audio.currentTime / audio.duration) * 100;
+        progress.style.width = percent + "%";
+        currentTimeEl.textContent = formatTime(audio.currentTime);
+        durationEl.textContent = formatTime(audio.duration);
+    // Synchronisation des paroles
+    let currentLine = 0;
+    for (let i = 0; i < lyricsData.length; i++) {
+      if (audio.currentTime >= lyricsData[i].time) {
+        currentLine = i;
+      } else {
+        break;
+      }
+    }
+    displayLyricsLine(currentLine);
+      }
+    };
+
+function displayLyricsLine(lineIndex) {
+  if (lyricsData.length === 0) {
+    lyricsContainer.innerText = "Aucune parole disponible.";
+    return;
+  }
+  // Afficher la ligne courante (tu peux aussi afficher 1-2 lignes avant/après si tu veux)
+  lyricsContainer.innerText = lyricsData[lineIndex].text;
+}
+
+
+    function formatTime(seconds) {
+      const min = Math.floor(seconds / 60);
+      const sec = Math.floor(seconds % 60);
+      return `${min}:${sec < 10 ? "0" + sec : sec}`;
+    }
+
+    audio.onended = () => {
+      if (isRepeat) {
+        audio.currentTime = 0;
+        audio.play();
+      } else {
+        nextTrack();
+      }
+    };
+
+    searchInput.oninput = () => {
+      const term = searchInput.value.toLowerCase();
+      filteredPlaylist = currentPlaylist.filter(track =>
+        track.title.toLowerCase().includes(term)
+      );
+      currentTrack = 0;
+      displayPlaylist();
+    };
+
+
+audio.addEventListener("timeupdate", () => {
+  if (lyricsData.length === 0) return;
+  const currentTime = audio.currentTime;
+  for (let i = lyricsData.length - 1; i >= 0; i--) {
+    if (currentTime >= lyricsData[i].time) {
+      lyricsContainer.innerText = lyricsData[i].text;
+      break;
+    }
+  }
+});
+
+
+    // Initialisation
+    displayPlaylistsSidebar();
+    displayPlaylist();
+  </script>
+</body>
+</html>
