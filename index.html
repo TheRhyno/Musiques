@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rhynozic</title>
 
   <style>
@@ -151,36 +152,42 @@
 /* Ajoute ceci à la fin du <style> existant */
 
 @media (max-width: 768px) {
+  .playlists-sidebar {
+    position: fixed;
+    top: 50px; /* hauteur header */
+    left: 0;
+    bottom: 0;
+    width: 250px;
+    background: #181818;
+    overflow-y: auto;
+    padding: 1rem 0;
+    border-right: 1px solid #333;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+  }
+
+  .playlists-sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* Pour que le reste de la page prenne tout l’espace */
   .container {
     flex-direction: column;
+    margin-left: 0; /* pas de marge, car sidebar cachée */
   }
+}
 
-  .playlists-sidebar {
-    width: 100%;
-    flex-direction: row;
-    flex-wrap: wrap;
-    border-right: none;
-    border-bottom: 1px solid #333;
-    justify-content: center;
-  }
 
-  .playlists-sidebar div {
-    flex: 1 1 50%;
-    text-align: center;
-    border-left: none;
-    border-bottom: 4px solid transparent;
-  }
 
-  .playlists-sidebar div.active {
-    border-bottom-color: #1db954;
-  }
+.playlist-container {
+  width: 320px;
+  background: #181818;
+  padding: 1rem;
+  display: block; /* ← change 'flex' à 'block' pour éviter conflit */
+  position: relative; /* ← nécessaire pour positionnement absolu interne */
+}
 
-  .playlist-container {
-    width: 100%;
-    max-height: 200px;
-    overflow-y: auto;
-    padding: 0.5rem;
-  }
 
   .player {
     width: 100%;
@@ -220,18 +227,154 @@
   border-radius: 6px;
 }
 
+body {
+  font-family: sans-serif;
+  margin: 0;
+  background: #111;
+  color: #fff;
+  overflow-x: hidden;
+}
+
+#searchContainer {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: #111;
+  gap: 8px;
+}
+
+#searchInput {
+  flex: 1;
+  padding: 10px;
+  font-size: 16px;
+  background-color: #222;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+}
+
+#clearSearch {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+
+
+
+#lyrics {
+  background-color: #000000;   /* noir */
+  color: #ffffff;
+  max-height: 300px;            /* hauteur max pour scroll */
+  padding: 15px;
+  border: 1px solid #aaa;
+  font-family: 'Arial', sans-serif;
+  white-space: pre-wrap;        /* garde les retours à la ligne */
+  box-sizing: border-box;
+  overflow-y: auto;             /* scroll vertical */
+  width: fit-content;           /* largeur selon contenu */
+  max-width: 600px;             /* limite la largeur max */
+  margin: 0 auto;               /* centre horizontal */
+  text-align: center;           /* texte centré */
+  border-radius: 10px;          /* coins arrondis */
+}
+
+
+
+
+
+
+
+
+.track {
+  padding: 12px 16px;
+  border-bottom: 1px solid #222;
+  font-size: 16px;
+}
+
+@media (max-width: 600px) {
+  #lyrics, #playlist, #now-playing {
+    padding: 10px;
+    font-size: 15px;
+  }
+
+  .track {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  #searchInput {
+    font-size: 14px;
+  }
+}
+
+.track-title {
+  font-weight: bold;
+}
+
+.track-duration {
+  font-size: 0.8em;
+  color: gray;
+  margin-top: 2px;
+}
+
+
+
 
   </style>
 </head>
 <body>
-  <header>TheRhyno's song</header>
+  <header>Rhynozic</header>
   <div class="container">
     <div class="playlists-sidebar" id="playlistsSidebar">
       <!-- Playlists seront ajoutées ici -->
     </div>
-    <div class="playlist-container">
-      <input id="searchInput" class="search-input" placeholder="Rechercher dans la playlist..." />
-      <div id="playlist"></div>
+
+<div class="playlist-container">
+<div class="search-wrapper" style="position: relative; display: inline-block; width: 100%; margin-bottom: 15px;">
+  <input
+    id="searchInput"
+    type="text"
+    placeholder="🔍 Rechercher une musique..."
+    oninput="toggleClearButton()"
+    style="
+      width: 100%;
+      padding: 10px 35px 10px 10px;
+      background-color: #111;
+      color: white;
+      border: 1px solid #333;
+      border-radius: 5px;
+      font-size: 14px;
+      box-sizing: border-box;
+    "
+  />
+  <button
+    id="clearSearch"
+    onclick="clearSearch()"
+    style="
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: none;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    "
+  >
+    ❌
+  </button>
+
+
+</div>
+
+  <div id="playlist"></div>
+
+
     </div>
     <div class="player">
       <img id="thumbnail" class="thumbnail" src="https://i.pinimg.com/736x/47/4c/57/474c57724fce98d50251cc5c2c463849.jpg" />
@@ -240,6 +383,7 @@
         <button onclick="prevTrack()" title="Précédent">⏮️</button>
         <button onclick="togglePlay()" id="playPauseBtn" title="Play/Pause">▶️</button>
         <button onclick="nextTrack()" title="Suivant">⏭️</button>
+  <button onclick="recommencerMusiqueActive()"title="Recommencer">🔁</button>
         <button onclick="toggleShuffle()" id="shuffleBtn" title="Shuffle">🔀</button>
         <button onclick="toggleRepeat()" id="repeatBtn" title="Repeat">🔁</button>
       </div>
@@ -251,6 +395,9 @@
         <span id="duration">0:00</span>
       </div>
 <div id="lyrics"></div>
+<div id="lyricsControls" style="margin-top: 10px;">
+  <button id="toggleLyricsModeBtn">🕓 Sync</button>
+
 
 
     </div>
@@ -263,455 +410,947 @@
       "JUL": [
         {
           title: "Bwo - Jul",
-          url: "https://files.catbox.moe/8vszmw.mp3",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/Bwo.mp3",
           img: "https://i.scdn.co/image/ab67616d0000b273f3e8990652f0a336ae55f26a",
-    lyrics: `
-Paroles
-
-[00:00.00]🎵
-[00:07.00]Appelle-moi L'ovni, la lettre ou le J
-[00:11.00]Asics, cheveux blancs, et survêt' jdid
-[00:14.00]Il m' régale, le couz'
-[00:16.00]Sous RSA, il se vide des Grey Goose
-[00:18.00]J'les baise à tous, t'inquiète pas besoin d'être 12
-[00:22.00]Opinel 12, caché dans la Canada Goose
-[00:26.00]J'ai fait l'album à la plaza
-[00:27.50]J'vais faire danser ton oncle et ta couz'
-[00:30.00]Cherche plus, c'est JuL
-[00:32.00]L'ovni, ouais d'Or et de Platine
-[00:33.50]Que ça chante, que sa rappe
-[00:36.00]Pour l'buzz et pour les gadjis
-[00:37.30]J'mets l'but, j'fais pas de salades
-[00:39.50]Gaucher comme Mohammed Salah
-[00:41.00]Pas d'équipes, pas de bras longs
-[00:43.00]J'fais dormir le Staffie dans le salon
-[00:45.50]J'dors pas, écoute, là j'fais parler le talent
-[00:49.00]Et ça m'dégoûte, ça m'dégoûte
-[00:51.00]Y a que des fils de putes
-[00:55.00]J'me mets sur béquille latérale
-Tu m'critiques, tu veux m'faire la Ze'
-Tu vas t'prendre un coup de casque intégral
-Au bar, ça s'en bats les couilles
-Aux toilettes s'en met dans l'nazou
-Timide et t'as pas un sous
-Tu vas en finir en rûte sur Badoo
-J'ai pas l'time, je nique tout
-Si t'as parlé de moi on s'en fout
-Chez moi c'est l'cœur avant tout
-Parce que le bon Dieu voit tout
-Putain, que j'croise la Mondeo
-Cet été, j'me sors la Honda
-T'es bizarre, j'sais pas ce qu'j't'ai fait, oh
-J'croyais qu't'étais la Honda
-Ne rejette pas la faute sur tout le monde
-C'est pas la mienne si tu montes pas
-Y a bien plus grave dans le monde
-N'oublie pas c'est Dieu qui donne ou pas
-Tu vois, tchoupe-pas faut arrêter
-Je sais que tu sais que je le sais
-T'as blessé, tu seras blessé
-T'as rabaissé, tu seras rabaissé
-Visière, fumée, j'passe entre les voitures au Jarret
-Elle m'a mis un carré-croix
-Pourtant elle m'a pisté toute la soirée
-Le TDM, j'le mets droit, sur Rivoire et Carret
-J'suis plutôt, Tokyo, avec sa coupe au carré
-Ça veut tacler le commissaire
-La jober comme Professor
-J'suis à l'aise dans le Golf 7 R
-Dans l'Audi ou l'Merco Kompressor
-Tu t'moques de moi toute l'année
-J't'envoie en final comme Rolando
-Si j'veux avec les sous qu'j'ai
-Demain, j'monte un commando
-Le couz', arrête, ça sert à rien d'me faire le costaud
-J'ai vu des choses que j'dirais pas
-Appelle-moi Commandant Cousteau
-Le couz', arrête, ça sert à rien d'me faire le costaud
-J'ai vu des choses que j'dirais pas
-Appelle-moi Commandant Cousteau
-J'vois l'couz' il fait un pétard
-Choqué, il sait faire d'la guitare
-La marche arrière est cassée
-On connaît plus l'demi-tour
-Plaque chauffante ça coupe des demi
-En bas ça bande en deux et demi
-Ça mise sa vie au Rami
-Après ça s'plaint de ramer
-Appelle-moi, L'ovni, la lettre ou le J
-Asics, cheveux blancs, et survêt' jdid
-J'troue les baffes, j'ai la rage
-Plus le time, je vois rouge
-J'nique tout et je m'arrache
-J'te fais le signe JuL au feu rouge
-Le couz' les bouts tu les fais rêche
-J'reviens demain c'est R
-Y a le secteur sous CR
-Ils m'ont trahi c'est R, c'est R
-J'vais les baiser les putos, les putas
-Ils m'ont trahi c'est R, c'est R
-J'vais les baiser les putos, les putas
-Ils m'ont trahi c'est R, c'est R
-J'vais les baiser les putos, les putas
-Ils m'ont trahi c'est R, c'est R
-J'vais tous les choquer, les putos, les putas
-J'vais tous les choquer, les putos, les putas
-J'vais tous les choquer, les putos, les putas
-Ne sous-estime ma faiblesse car bientôt elle sera redoutable
-Appelle-moi L'ovni, la lettre ou le J
-Appelle-moi L'ovni, la lettre ou le J
-Appelle-moi L'ovni, la lettre ou le J
-`
+  duration: 232,
+  isSynced: true,
+  lyricsUrlSynced: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/Paroles%20Bwo.lrc",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/Paroles%20Bwo%20non%20syncro.txt"
         },
-
-
 
         {
           title: "JCVD - Jul",
           url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/Jul%20-%20JCVD%20Clip%20Officiel%202019.mp3",
           img: "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/7f/06/c5/7f06c536-a0e2-b9b9-ac42-201a0c7b8291/cover.jpg/600x600bf-60.jpg",
-    lyrics: `
-[00:00.00]Ça veut l'port d'armes
-[00:00.00]Et les gros bras à Jean Claude Van Damme
-[00:00.00]J'fume la beuh d'Amsterdam
-Celle qui est bonne, qui t'monte au crâne
-Tu veux de la bonne, le petit t'écrase deux Doliprane
-Si dans le bis tu déconnes, le petit reviendra armé en bécane
-Moi j'fume des tonnes (nanana) et je déconne (nanana)
-J'sais que je vous étonne (nanana) encore un album (nanana)
-J'suis plus dans la zone (nanana) j'me suis taillé (nanana)
-Mi corazon (nanana) je m'en vais sa y est (nanana)
-Pochon dans le sac Quechua, claquettes coupe au séchoir
-J'ai envie de rôder le soir, mais dans la vie faut faire des choix
-Seront-ils la à mon décès? j'ai fait des sous ça ma laissé
-Ça ma haï, rabaissé, a en mériter des fessées
-Tu me racontes tes 'blèmes, j'ai d'autres soucis
-Ils m'en veulent, ils m'aiment, c'est la jalousie
-Ils récoltent ce qu'ils sèment, j'suis comme eux donc moi aussi
-Dis-moi ce qu'il te gêne, je dis ce que je vis
-Je dis c'que je vis
-Je dis c'que je vis
-Je dis c'que je vis
-Ça veut l'port d'armes
-Les gros bras à Jean Claude Van Damme
-J'fume la beuh d'Amsterdam
-Celle qui est bonne, qui t'monte au crâne
-Ça veut l'port d'armes
-Et les gros bras à Jean Claude Van Damme
-J'fume la beuh d'Amsterdam
-Celle qui est bonne, qui t'monte au crâne
-Des fois je passe par le secteur, ils me reviennent les souvenirs
-Les temps pleins dans le quartier, avant de voir les sous venir
-J'ai pas le salaire d'un joueur de ballon
-J'ai pas encore deux tigres dans le salon
-J'ai pas changé je représente toujours
-Tarascon, La Farlede, Baumettes, Luynes, Salon
-Et en promenade sa travaille les pecs
-Rien qu'du parlu ça arrache des têtes
-Suffit d'une balance et le maton les pètent
-Suffit d'une balance et le maton les pètent
-Tu me racontes tes 'blèmes, j'ai d'autres soucis
-Ils m'en veulent, ils m'aiment, c'est la jalousie
-Ils récoltent ce qu'ils sèment, j'suis comme eux donc moi aussi
-Dis-moi ce qui te gêne, je dis ce que je vis
-Je dis c'que je vis
-Je dis c'que je vis
-Je dis c'que je vis
-Ça veut l'port d'armes
-Les gros bras à Jean Claude Van Damme
-J'fume la beuh d'Amsterdam
-Celle qui est bonne, qui t'monte au crâne
-Ça veut l'port d'armes
-Et les gros bras à Jean Claude Van Damme
-J'fume la beuh d'Amsterdam
-Celle qui est bonne, qui t'monte au crâne
-Moi j'fume des tonnes (nanana) et je deconne (nanana)
-J'sais que je vous étonne (nanana) encore un album (nanana)
-J'suis plus dans la zone (nanana) j'me suis taillé (nanana)
-Mi corazon (nanana) je m'en vais ça y est (nanana)
-Tu me racontes tes 'blèmes, j'ai d'autres soucis
-Ils m'en veulent, ils m'aiment, c'est la jalousie
-Ils récoltent ce qu'ils sèment, j'suis comme eux donc moi aussi
-Dis-moi ce qui te gêne, je dis ce que je vis
-Je dis c'que je vis
-Je dis c'que je vis
-Je dis c'que je vis
-`
-        },
-        {
-          title: "Phénoménal - Jul",
-          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20-%20Ph%C3%A9nom%C3%A9nal%20Clip%20officiel%202025.mp3",
-          img: "https://i1.sndcdn.com/artworks-0zhzsajb0FOKiSR9-ByUnjw-t500x500.jpg",
-    lyrics: `
-Paroles
+  duration: 194,
+  isSynced: true,
+  lyricsUrlSynced: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/Paroles%20JCVD.lrc",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesJCVD.txt"
 
-Ju-Ju-Jul
-Ah, ah, ah, ah, ah, ah
-Ju-Ju-Jul
-Eh, eh, eh
-
-ls veulent m'remplacer par l'IA 
-`
         },
+{
+  title: "Phénoménal - Jul",
+  url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20-%20Ph%C3%A9nom%C3%A9nal%20Clip%20officiel%202025.mp3",
+  img: "https://i1.sndcdn.com/artworks-0zhzsajb0FOKiSR9-ByUnjw-t500x500.jpg",
+  duration: 205,
+  isSynced: true,
+  lyricsUrlSynced: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/Parolesphenomenal.lrc",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesPhenomenal.txt"
+},
+
         {
           title: "Alors la zone - Jul",
           url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20-%20Alors%20la%20zone%20_%20Clip%20Officiel%20_%202021.mp3",
           img: "https://i1.sndcdn.com/artworks-95xHCDsGNFd81BVL-UEHYwQ-t500x500.jpg",
-    lyrics: `
-Paroles
-
-La zone en personne, la zone en personne
-etc...
-`
+  duration: 205,
+  isSynced: false,
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/Paroles%20Alors%20la%20zone%20non%20syncro.txt"
         },
         {
           title: "Avant la douane - Jul",
           url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JUL%20-%20AVANT%20LA%20DOUANE%20ALBUM%20GRATUIT%20%5B30%5D%20FINAL%202016.mp3",
           img: "https://cdn-images.dzcdn.net/images/cover/c6f6f11a1d8549830ac2f311e11cee6d/0x1900-000000-80-0-0.jpg",
-    lyrics: `
-Paroles
-
-La zone en personne, la zone en personne
-etc...
-`
+  duration: 192,
+  isSynced: false,
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/Paroles%20Avant%20la%20douane%20non%20syncro.txt"
         },
         {
           title: "Amnésia - Jul",
           url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/Amn%C3%A9sia.mp3",
           img: "https://i1.sndcdn.com/artworks-WE4PYbLMftzs-0-t500x500.jpg",
-    lyrics: `
-Paroles
-
-La zone en personne, la zone en personne
-etc...
-`
+  duration: 132,
+  isSynced: false,
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/Paroles%20Amn%C3%A9sia%20non%20syncro.txt"
         },
         {
           title: "Pow Pow - Jul",
           url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20-%20Pow%20Pow%20Clip%20officiel%202019.mp3",
           img: "https://i.scdn.co/image/ab67616d0000b273a6fa48d12eea7e21d9f46373",
-    lyrics: `
-Paroles
-
-La zone en personne, la zone en personne
-etc...
-`
+  duration: 192,
+  isSynced: false,
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/Paroles%20Pow%20Pow%20non%20syncro.txt"
         },
         {
           title: "En Y - Jul",
           url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/En%20Y.mp3",
           img: "https://i.scdn.co/image/ab67616d0000b273e66ddf6698d0e6defba20124",
-    lyrics: `
-Paroles
-
-La zone en personne, la zone en personne
-etc...
-`
+  duration: 233,
+  isSynced: false,
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/Paroles%20En%20Y%20non%20syncro.txt"
         },
         {
           title: "On se régale - Jul Ft Bengous",
           url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20-%20On%20se%20r%C3%A9gale%20Ft%20Bengous%20Album%20gratuit%20vol.5%20%5B13%5D%202019.mp3",
           img: "https://i1.sndcdn.com/artworks-1Cdi1pxam3Sb-0-t500x500.jpg",
-    lyrics: `
-Paroles
+  duration: 205,
+  isSynced: false,
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/Paroles%20on%20se%20r%C3%A9gale%20non%20syncro.txt"
 
-La zone en personne, la zone en personne
-etc...
-`
         },
         {
           title: "Wesh alors - Jul",
           url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JUL%20-%20WESH%20ALORS%20CLIP%20OFFICIEL%202015.mp3",
           img: "https://i.scdn.co/image/ab67616d0000b273e66ddf6698d0e6defba20124",
-    lyrics: `
-Paroles
+  duration: 206,
+  isSynced: false,
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/Paroles%20Wesh%20alors%20non%20syncro.txt"
 
-La zone en personne, la zone en personne
-etc...
-`
         },
         {
           title: "Ibiza - Jul Ft Jimmy Sax",
           url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20Ft%20Jimmy%20Sax%20IBIZA%20Clip%20officiel%202019.mp3",
           img: "https://i.scdn.co/image/ab67616d0000b273a6fa48d12eea7e21d9f46373",
-    lyrics: `
-Paroles
-`
+  duration: 237,
+  isSynced: false,
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/Paroles%20Ibiza%20non%20syncro.txt"
         },
         {
           title: "La faille - Jul",
-          url: "https://files.catbox.moe/244ljm.mp3",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20-%20La%20faille%20Clip%20Officiel%202023.mp3",
           img: "https://i.scdn.co/image/ab67616d0000b2735a5a16ac8fe5ac8514ef436a",
-    lyrics: `
-Paroles
-`
+  duration: 298,
+  isSynced: false,
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/Paroles%20La%20Faille%20non%20syncro.txt"
         },
 
         {
           title: "Dans ma paranoïa - Jul",
-          url: "https://files.catbox.moe/665pjl.mp3",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/Jul%20-%20Dans%20ma%20parano%C3%AFa%20%5BClip%20Officiel%5D(1).mp3",
           img: "https://m.media-amazon.com/images/I/71Tb8nTizfL._UF1000,1000_QL80_.jpg",
-    lyrics: `
-Paroles
-`
+  duration: 174,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/Paroles%20Dans%20ma%20paranoia%20non%20syncro.txt"
         },
 
         {
           title: "La Bandite - Jul",
-          url: "mp3",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20-%20La%20Bandite%20Clip%20officiel%202019(2).mp3",
           img: "https://i1.sndcdn.com/artworks-Z3oiNWs5BxPk-0-t500x500.jpg",
-    lyrics: `
-Paroles
-`
+  duration: 177,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/ParolesLabanditeNonsyncro.txt"
         },
 
         {
-          title: "COUCOU",
-          url: "mp3",
-          img: "Miniature",
-    lyrics: `
-Paroles
-`
+          title: "Asalto - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/Asalto.mp3",
+          img: "https://i1.sndcdn.com/artworks-uP2DhmuHsG6f-0-t500x500.jpg",
+  duration: 267,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/Paroles%20Asalto%20non%20syncro.txt"
         },
 
         {
-          title: "COUCOU",
-          url: "mp3",
-          img: "Miniature",
-    lyrics: `
-Paroles
-`
+          title: "Italia - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/Jul%20-%20Italia%20Clip%20Officiel%20%F0%9F%93%80%F0%9F%91%BD%F0%9F%92%BF%202020.mp3",
+          img: "https://cdn-images.dzcdn.net/images/cover/41659f937156e0eb433a83f8671b7388/1900x1900-000000-80-0-0.jpg",
+  duration: 209,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/Paroles%20Italia%20non%20syncro.txt"
         },
 
         {
-          title: "COUCOU",
-          url: "mp3",
-          img: "Miniature",
-    lyrics: `
-Paroles
-`
+          title: "Tchikita - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JUL%20-%20Tchikita%20%5B05%5D%20Album%20Gratuit%20Vol%20.%202%202016%20(%20Big%20up%20a%20Dj%20Babs%20).mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b2739bc3e80d5e9fb9bde9df0e71",
+  duration: 200,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/Paroles%20Tchikita%20non%20syncro.txt"
         },
 
         {
-          title: "COUCOU",
-          url: "mp3",
-          img: "Miniature",
-    lyrics: `
-Paroles
-`
+          title: "Ma Jolie - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20-%20Ma%20Jolie%20Clip%20officiel%202017.mp3",
+          img: "https://cdn-images.dzcdn.net/images/cover/c14025e98d292b58ee236c91ff60b443/1900x1900-000000-80-0-0.jpg",
+  duration: 275,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/ParolesMajolieNonsyncro.txt"
+        },
+        {
+          title: "J'ai tout su - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20-%20Jai%20tout%20su%20clip%20officiel%202022.mp3",
+          img: "https://cdn-images.dzcdn.net/images/cover/a1741d664698bb5fb5a604b4c388048e/1900x1900-000000-80-0-0.jpg",
+  duration: 206,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/ParolesJaitoutsuNonsyncro.txt"
+        },
+        {
+          title: "C'est pas des LOL - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20-%20Cest%20pas%20des%20LOL%20Clip%20Officiel%202019.mp3",
+          img: "https://cdn-images.dzcdn.net/images/cover/7644265520095d05d005d4f2f795a689/0x1900-000000-80-0-0.jpg",
+  duration: 401,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/ParolesCestpasdeslolNonsyncro.txt"
+        },
+        {
+          title: "Tropical - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20-%20Tropical%20Clip%20officiel%202023.mp3",
+          img: "https://assets.diverto.tv/media/remote/aHR0cHM6Ly9kaXZlbmcucm9zc2VsY2RuLm5ldC9zaXRlcy9kZWZhdWx0L2ZpbGVzL3RodW1ibmFpbHMvaW1hZ2UvcHVib2FzaXMuanBn?w=970&h=485&fit=contain&fm=pjpg&s=1a6338afe3cf056a5a47b633b60e4871",
+  duration: 161,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/ParolesTropicalNonsyncro.txt"
+        },
+        {
+          title: "Sous La Lune - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20Sous%20La%20Lune%20.mp3",
+          img: "https://cdn-images.dzcdn.net/images/cover/d70dbea33c760ed8b7fdf77b90986e1f/1900x1900-000000-80-0-0.jpg",
+  duration: 148,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/ParolesSouslaluneNonsyncro.txt"
+        },
+        {
+          title: "Bande Organisée - SCH / Kofs / Jul / Naps / Soso Maness / Elams / Solda / Houari",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/Bande%20Organise%20-%20SCH%20_%20Kofs%20_%20Jul%20_%20Naps%20_%20Soso%20Maness%20_%20Elams%20_%20Solda%20_%20Houari%20__%20Clip%20Officiel.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b273f7df8ac7362a0ab57a3ae120",
+  duration: 373,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/ParolesBandeorganis%C3%A9eNonsyncro.txt"
+        },
+        {
+          title: "Tu la love - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/Jul%20-%20Tu%20la%20love.mp3",
+          img: "https://i1.sndcdn.com/artworks-PjgCcgKOyKnOspT3-JzuA6w-t500x500.jpg",
+  duration: 211,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/ParolesTulaloveNonsyncro.txt"
+        },
+        {
+          title: "Inspi D'ailleurs - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/Jul%20-%20Inspi%20Dailleurs%20__%20Clip%20Officiel%20__%202018.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b273f3e8990652f0a336ae55f26a",
+  duration: 239,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/ParolesInspidailleursNonsyncro.txt"
+        },
+        {
+          title: "Comme d'hab - Jul / Aonzo",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/YouTube.mp3",
+          img: "https://i1.sndcdn.com/artworks-PYezzF735ef9-0-t500x500.jpg",
+  duration: 209,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/ParolesCommedhabnonsyncro.txt"
+        },
+        {
+          title: "Comme les gens d'ici - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/Comme%20les%20gens%20dici.mp3",
+          img: "https://i1.sndcdn.com/artworks-mZUhFcI5a0GN-0-t1080x1080.jpg",
+  duration: 190,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/ParolesCommelesgensdiciNonsyncro.txt"
+        },
+        {
+          title: "Sort le cross volé",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JUL%20-%20Sort%20le%20cross%20vol%20Paroles%20avec%20son.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b27385d9fb2e7833cb239769c02d",
+  duration: 350,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/ParolesSorslecrossvol%C3%A9nonsyncro.txt"
+        },
+        {
+          title: "J'oublie tout - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/Jul%20-%20Joublie%20tout%20Son%20Officiel.mp3",
+          img: "https://i1.sndcdn.com/artworks-WMFyomxtwzATtuuH-RCs3Bw-t240x240.jpg",
+  duration: 316,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/ParolesJoublietoutNonsyncro.txt"
+        },
+        {
+          title: "Faut pas - Jul Ft PLK",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/PLK%20feat%20JUL%20-%20Faut%20pas%20clip%20officiel.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b273f624decd660abf26527a9875",
+  duration: 135,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/ParolesFautpasNonsyncro.txt"
+        },
+        {
+          title: "Pic et Pic, Alcool et Drame - Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/JuL%20-%20Pic%20et%20pic%20Alcool%20et%20Drame%20__%20Clip%20officiel%20__%202021.mp3",
+          img: "https://i1.sndcdn.com/artworks-WuWD0GfNwK40-0-t500x500.jpg",
+  duration: 197,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/ParolesPicetpicNonsyncro.txt"
+        },
+        {
+          title: "Mimi",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20Mimi%20-%20Jul.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b273f335028248fc06206759729e",
+  duration: 219,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/refs/heads/main/ParolesMimiNonsyncro.txt"
         }
 
 
 
       ],
-      "Electronique": [
+      "Gims": [
         {
-          title: "Lounge Beats",
-          url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-          img: "https://picsum.photos/id/238/200/200"
+          title: "Ciel - Gims",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20CIEL%20-%20GIMS.mp3",
+          img: "https://i1.sndcdn.com/artworks-YZmyjIWSACZnNCIy-bvdeIw-t500x500.jpg",
+  duration: 186,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesCiel.txt"
         },
         {
-          title: "Soft Electro",
-          url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-          img: "https://picsum.photos/id/239/200/200"
+          title: "Ninao - Gims",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20NINAO%20-%20GIMS.mp3",
+          img: "https://cdn-images.dzcdn.net/images/cover/2cd8dd5a5c11af547204abae0da5be24/500x500.jpg",
+  duration: 167,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesNinao.txt"
+        },
+        {
+          title: "Air Force Blanche - Gims & Jul",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/GIMS%20%26%20Jul%20-%20AIR%20FORCE%20BLANCHE%20(Official%20Lyrics%20Vid%C3%A9o).mp3",
+          img: "https://i1.sndcdn.com/artworks-GE6x3N1o5feDEKKv-OZexfg-t500x500.jpg",
+  duration: 185,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesAirforceblanche.txt"
+        },
+        {
+          title: "Sois pas timide - Gims",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20SOIS%20PAS%20TIMIDE%20-%20GIMS.mp3",
+          img: "https://i1.sndcdn.com/artworks-FYxnA44eAvDG-0-t500x500.jpg",
+  duration: 166,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesSoispastimide.txt"
+        },
+        {
+          title: "Spider - Gims",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20SPIDER%20-%20GIMS.mp3",
+          img: "https://cdn-images.dzcdn.net/images/cover/a45f78b33507713b2ffc6d95afa87b6a/0x1900-000000-80-0-0.jpg",
+  duration: 188,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesSpider.txt"
+        },
+        {
+          title: "Bella - Gims",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20Bella%20-%20GIMS.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b273596368082712ceff7ae95649",
+  duration: 226,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesBella.txt"
+        },
+        {
+          title: "Hola Señorita - Gims",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20Hola%20Se%C3%B1orita%20-%20GIMS.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b2735a830e6aa720f2f6f8695e8c",
+  duration: 218,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesHolasenorita.txt"
+        },
+        {
+          title: "Seya - Gims / Morad",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20Seya%20-%20GIMS.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b2739f09253bd56dacf61e8c50b3",
+  duration: 188,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesSeya.txt"
+        },
+        {
+          title: "Appelle ta copine - Gims",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20APPELLE%20TA%20COPINE%20-%20GIMS.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b273f585fac455f1176c4dee04a6",
+  duration: 180,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesAppelletacopine.txt"
+        },
+        {
+          title: "Contact - Gims",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20CONTACT%20-%20GIMS.mp3",
+          img: "https://images.genius.com/5871071340e014012b3c27020a64cbc5.300x300x1.jpg",
+  duration: 194,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesContact.txt"
+        },
+        {
+          title: "Best life - Naps Ft Gims",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20Best%20life%20-%20Naps.mp3",
+          img: "https://images.epagine.fr/233/3700187675233.jpg",
+  duration: 189,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesBestlife.txt"
+        },
+        {
+          title: "Piano - Gims Ft Werenoi",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20Piano%20-%20Werenoi.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b2737c02e9af90fa282fa149cf99",
+  duration: 173,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesPiano.txt"
+        },
+
+      ],
+
+
+
+      "Soprano": [
+        {
+          title: "En feu - Soprano",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20En%20feu%20-%20Soprano.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b27339505eb7ec495325624dabee",
+  duration: 205,
+  isSynced: false,
+  lyricsUrlSynced: "SYNC",
+  lyricsUrlText: "TEXT"
+
+        },
+        {
+          title: "Cosmo - Soprano",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20Cosmo%20-%20Soprano.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b27320224ac0714054cd2ca38388",
+  duration: 183,
+  isSynced: false,
+  lyricsUrlSynced: "SYNC",
+  lyricsUrlText: "TEXT"
+
+        },
+        {
+          title: "Le coach - Soprano ft Vincenzo",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20Le%20coach%20(feat.%20Vincenzo)%20-%20Soprano.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b273c9bf61eae3cacb8e0321907e",
+  duration: 200,
+  isSynced: false,
+  lyricsUrlSynced: "SYNC",
+  lyricsUrlText: "TEXT"
+
+        },
+        {
+          title: "Marius - Soprano",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20Marius%20-%20Soprano.mp3",
+          img: "https://i1.sndcdn.com/artworks-0e38960c-722b-4130-8484-9d72066827de-0-t240x240.jpg",
+  duration: 155,
+  isSynced: false,
+  lyricsUrlSynced: "SYNC",
+  lyricsUrlText: "TEXT"
+
+        },
+        {
+          title: "COUCOU",
+          url: "COUCOUCOUCOU",
+          img: "Miniature",
+  duration: 000,
+  isSynced: false,
+  lyricsUrlSynced: "SYNC",
+  lyricsUrlText: "TEXT"
+
+        }
+
+      ],
+
+
+
+
+
+      "Divers": [
+        {
+          title: "Espresso Macchiato - Tommy Cash",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20Espresso%20Macchiato%20-%20Tommy%20Cash.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b273a766fee458ae15173a226bea",
+  duration: 173,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/Paroles.txt"
+
+        },
+        {
+          title: "Imagine - Carbonne",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20Imagine%20-%20Carbonne.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b27332b811faece101bf5a230121",
+  duration: 165,
+  isSynced: false,
+  lyricsUrlSynced: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/Imagineparoles.lrc",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesImagine.txt"
+
+        },
+        {
+          title: "Suavemente - Soolking",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20Suavemente%20-%20Soolking.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b27324287bb30cf3d09581dff13b",
+  duration: 159,
+  isSynced: false,
+  lyricsUrlSynced: "SYNCRO",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesSuavemente.txt"
+
+        },
+        {
+          title: "APT. - ROSÉ & Bruno Mars",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20APT.%20-%20ROS%C3%89.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b27336032cb4acd9df050bc2e197",
+  duration: 169,
+  isSynced: false,
+  lyricsUrlSynced: "SYNC",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesAPT.txt"
+
+        },
+        {
+          title: "Ramenez la coupe à la maison - Vegedream",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20Ramenez%20la%20coupe%20%C3%A0%20la%20maison%20-%20Vegedream.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b273fd2cf122277369b80c9d3ceb",
+  duration: 235,
+  isSynced: false,
+  lyricsUrlSynced: "SYNC",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesRamenezlacoupealamaison.txt"
+
+        },
+        {
+          title: "Nos souvenirs - Jok'air, Chilla et Yseult",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20Nos%20souvenirs%20-%20Jok'air.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b273a91a188ad0b27eba9b55b38c",
+  duration: 485,
+  isSynced: false,
+  lyricsUrlSynced: "SYNC",
+  lyricsUrlText: "https://raw.githubusercontent.com/TheRhyno/Paroles/main/ParolesNossouvenirs.txt"
+
+        },
+        {
+          title: "Nouvelles - PLK",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20Nouvelles%20-%20PLK.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b273390bfa914f9f7b04582aba5d",
+  duration: 179,
+  isSynced: false,
+  lyricsUrlSynced: "SYNC",
+  lyricsUrlText: "TEXT"
+
+        },
+        {
+          title: "Demain - PLK",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20Demain%20-%20PLK.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b273390bfa914f9f7b04582aba5d",
+  duration: 183,
+  isSynced: false,
+  lyricsUrlSynced: "SYNC",
+  lyricsUrlText: "TEXT"
+
+        },
+        {
+          title: "Lemon tree - Fools Garden",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20Lemon%20Tree%20-%20Fools%20Garden.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b273c06a4ba9d947dbf4ef143190",
+  duration: 191,
+  isSynced: false,
+  lyricsUrlSynced: "SYNC",
+  lyricsUrlText: "TEXT"
+
+        },
+        {
+          title: "Petit génie - Jungeli, Imen Es, Alonzo, Abou Debeing & Lossa",
+          url: "https://raw.githubusercontent.com/TheRhyno/Musiques/main/SpotiDownloader.com%20-%20Petit%20g%C3%A9nie%20-%20Jungeli.mp3",
+          img: "https://i.scdn.co/image/ab67616d0000b2737b6ae17633cbb6f9c1b5d4ac",
+  duration: 217,
+  isSynced: false,
+  lyricsUrlSynced: "SYNC",
+  lyricsUrlText: "TEXT"
+
+        },
+        {
+          title: "COUCOU",
+          url: "COUCOUCOUCOU",
+          img: "Miniature",
+  duration: 000,
+  isSynced: false,
+  lyricsUrlSynced: "SYNC",
+  lyricsUrlText: "TEXT"
+
+        },
+        {
+          title: "COUCOU",
+          url: "COUCOUCOUCOU",
+          img: "Miniature",
+  duration: 000,
+  isSynced: false,
+  lyricsUrlSynced: "SYNC",
+  lyricsUrlText: "TEXT"
+
+        },
+        {
+          title: "COUCOU",
+          url: "COUCOUCOUCOU",
+          img: "Miniature",
+  duration: 000,
+  isSynced: false,
+  lyricsUrlSynced: "SYNC",
+  lyricsUrlText: "TEXT"
+
+        },
+        {
+          title: "COUCOU",
+          url: "COUCOUCOUCOU",
+          img: "Miniature",
+  duration: 000,
+  isSynced: false,
+  lyricsUrlSynced: "SYNC",
+  lyricsUrlText: "TEXT"
+
         }
       ]
     };
 
-    let currentPlaylistName = Object.keys(playlists)[0];
-    let currentPlaylist = playlists[currentPlaylistName];
-    let filteredPlaylist = [...currentPlaylist];
-    let currentTrack = 0;
-    let isShuffle = false;
-    let isRepeat = false;
 
+// Variables globales
+let currentPlaylistName = Object.keys(playlists)[0];
+let currentPlaylist = playlists[currentPlaylistName];
+let filteredPlaylist = [...currentPlaylist];
+let currentTrack = 0;
+let isShuffle = false;
+let isRepeat = false;
+let useSyncedLyrics = true;
+let userToggledLyricsMode = false;
 
 
 let lyricsData = [];
-let lyricsContainer = document.getElementById("lyrics");
+let currentLyricIndex = 0;
 
-function parseLyrics(lrc) {
-  lyricsData = [];
-  const lines = lrc.trim().split("\n");
-  for (let line of lines) {
-    const match = line.match(/\[(\d{2}):(\d{2}\.\d{2})\](.*)/);
-    if (match) {
-      const time = parseInt(match[1]) * 60 + parseFloat(match[2]);
-      const text = match[3];
-      lyricsData.push({ time, text });
-    }
-  }
+let allTracks = []; // Liste de toutes les pistes de toutes les playlists
+for (let name in playlists) {
+  allTracks.push(...playlists[name]);
 }
 
+
+const audio = document.getElementById("audio");
+const progress = document.getElementById("progress");
+const nowPlaying = document.getElementById("now-playing");
+const thumbnail = document.getElementById("thumbnail");
+const playlistDiv = document.getElementById("playlist");
+const playlistsSidebar = document.getElementById("playlistsSidebar");
+const searchInput = document.getElementById("searchInput");
+
+searchInput.addEventListener("input", toggleClearButton);
+
+
+
+
+const playPauseBtn = document.getElementById("playPauseBtn");
+const shuffleBtn = document.getElementById("shuffleBtn");
+const repeatBtn = document.getElementById("repeatBtn");
+const currentTimeEl = document.getElementById("currentTime");
+const durationEl = document.getElementById("duration");
+const lyricsDisplay = document.getElementById("lyrics"); // Ajouté
+
+// Affiche la sidebar playlists
+function displayPlaylistsSidebar() {
+  playlistsSidebar.innerHTML = "";
+  Object.keys(playlists).forEach(name => {
+    const div = document.createElement("div");
+    div.textContent = name;
+    div.classList.toggle("active", name === currentPlaylistName);
+    div.onclick = () => {
+      if(name !== currentPlaylistName) {
+        currentPlaylistName = name;
+        currentPlaylist = playlists[currentPlaylistName];
+        filteredPlaylist = [...currentPlaylist];
+        currentTrack = 0;
+        searchInput.value = "";
+        displayPlaylistsSidebar();
+        displayPlaylist();
+        updatePlaylistHighlight(); // ✅ Pour garder la bonne mise en surbrillance
+        // ❌ Supprime ceci :
+        // playTrack(currentTrack);
+      }
+    };
+    playlistsSidebar.appendChild(div);
+  });
+}
+
+
+
+document.getElementById("toggleLyricsModeBtn").addEventListener("click", () => {
+  const track = filteredPlaylist[currentTrack];
+  const hasSyncLyrics = track.isSynced && (track.lyrics || track.lyricsUrlSynced);
+
+  // Toujours toggle le mode (même si les paroles ne sont pas disponibles)
+  useSyncedLyrics = !useSyncedLyrics;
+  userToggledLyricsMode = true;
+
+  // Affiche un message si on active SYNC mais que ce n’est pas dispo
+  if (useSyncedLyrics && !hasSyncLyrics) {
+    lyricsDisplay.innerText = "⛔ Paroles synchronisées non disponibles pour ce morceau.";
+  } else {
+    displayLyrics(currentTrack); // recharge normalement
+  }
+
+  // Met à jour le texte du bouton
+document.getElementById("toggleLyricsModeBtn").textContent =
+  useSyncedLyrics ? "📃 Passer en paroles simples" : "🕓 Passer en paroles sync";
+});
+
+
+
+
+
+// Affiche la playlist filtrée
+function displayPlaylist() {
+  playlistDiv.innerHTML = "";
+
+  // 🔢 Calcul de la durée totale de la playlist affichée
+const totalSeconds = filteredPlaylist.reduce((sum, track) => sum + (track.duration || 0), 0);
+const hours = Math.floor(totalSeconds / 3600);
+const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+let totalDurationText = "⏱️ Durée totale : ";
+if (hours > 0) {
+  totalDurationText += `${hours}h `;
+}
+totalDurationText += `${minutes}min`;
+
+  // 🏷️ Affiche la durée totale au-dessus de la playlist
+  const durationDiv = document.createElement("div");
+  durationDiv.style.padding = "8px";
+  durationDiv.style.fontWeight = "bold";
+  durationDiv.style.color = "#555";
+  durationDiv.textContent = totalDurationText;
+  playlistDiv.appendChild(durationDiv);
+
+  filteredPlaylist.forEach((track, index) => {
+    const div = document.createElement("div");
+    div.className = "track";
+    if (index === currentTrack) div.classList.add("active");
+
+    // Image miniature à gauche
+    const img = document.createElement("img");
+    img.src = track.img;
+    img.alt = track.title;
+    img.style.width = "40px";     
+    img.style.height = "40px";
+    img.style.objectFit = "cover";
+    img.style.marginRight = "10px";
+    img.style.verticalAlign = "middle";
+
+    // Container texte (titre + durée)
+    const textContainer = document.createElement("div");
+    textContainer.style.display = "inline-block";
+    textContainer.style.verticalAlign = "middle";
+
+    // Titre
+    const titleSpan = document.createElement("div");
+    titleSpan.textContent = track.title;
+    titleSpan.style.fontWeight = "bold";
+
+    // Durée
+    const durationSpan = document.createElement("div");
+    durationSpan.textContent = formatTime(track.duration || 0); // durée formatée ou 0 si manquante
+    durationSpan.style.fontSize = "0.8em";
+    durationSpan.style.color = "gray";
+    durationSpan.style.marginTop = "2px";
+
+    // Ajout titre + durée dans container texte
+    textContainer.appendChild(titleSpan);
+    textContainer.appendChild(durationSpan);
+
+    // Ajout image + texte dans la div track
+    div.appendChild(img);
+    div.appendChild(textContainer);
+
+    div.onclick = () => {
+      currentTrack = index;
+      playTrack(currentTrack);
+      updatePlaylistHighlight();
+    };
+
+    playlistDiv.appendChild(div);
+  });
+
+  updatePlaylistHighlight(); // appeler ici pour que le surlignage soit correct à l'affichage
+}
+
+
+
+function updatePlaylistHighlight() {
+  const tracks = playlistDiv.querySelectorAll(".track");
+  tracks.forEach((t, i) => {
+    t.classList.toggle("active", i === currentTrack);
+  });
+}
+
+
+
+
+
+// Affiche les paroles selon le type de piste (sync ou non)
 function displayLyrics(index) {
   const track = filteredPlaylist[index];
-  if (!track.lyrics) {
-    lyricsContainer.innerText = "Aucune parole disponible.";
+
+  currentLyricIndex = 0;
+  lyricsData = [];
+
+  // 🔥 Ce que tu veux : remettre Sync si dispo
+if (!userToggledLyricsMode) {
+  useSyncedLyrics = track.isSynced && (track.lyrics || track.lyricsUrlSynced);
+}
+
+
+  lyricsDisplay.innerText = "Chargement des paroles...";
+
+const updateLyricsModeButton = () => {
+  const btn = document.getElementById("toggleLyricsModeBtn");
+  btn.textContent = useSyncedLyrics ? "📃 Passer en paroles simples" : "🕓 Passer en paroles sync";
+};
+
+
+  const tryLoadTextLyrics = () => {
+    updateLyricsModeButton(); // 👈 Assure la mise à jour du bouton
+
+    // 3. Si les paroles texte sont à charger via un lien externe
+    if (track.lyricsUrlText) {
+      fetch(track.lyricsUrlText)
+        .then(response => {
+          if (!response.ok) throw new Error("Erreur de chargement");
+          return response.text();
+        })
+        .then(data => {
+          lyricsDisplay.innerHTML = data
+            .split('\n')
+            .map(line => `<p>${line}</p>`)
+            .join('');
+        })
+        .catch(err => {
+          lyricsDisplay.innerText = "Impossible de charger les paroles.";
+          console.error(err);
+        });
+      return;
+    }
+
+    // 2. Si les paroles texte sont incluses directement
+    if (track.lyrics) {
+      if (Array.isArray(track.lyrics)) {
+        lyricsDisplay.innerHTML = track.lyrics.map(line => `<p>${line}</p>`).join('');
+      } else if (typeof track.lyrics === 'string') {
+        lyricsDisplay.innerHTML = track.lyrics.split('\n').map(line => `<p>${line}</p>`).join('');
+      }
+      return;
+    }
+
+    // 4. Si rien n’est disponible
+    lyricsDisplay.innerText = "Aucune parole disponible.";
+  };
+
+  // 1. Mode SYNC (dans l’objet directement)
+  if (useSyncedLyrics && track.isSynced && track.lyrics) {
+    parseLyrics(track.lyrics);
+    lyricsDisplay.innerText = "";
+    updateLyricsModeButton();
     return;
   }
-  parseLyrics(track.lyrics);
-  lyricsContainer.innerText = ""; // reset affichage
+
+  // 2. Mode SYNC (via URL)
+  if (useSyncedLyrics && track.isSynced && track.lyricsUrlSynced) {
+    fetch(track.lyricsUrlSynced)
+      .then(response => {
+        if (!response.ok) throw new Error("Erreur de chargement");
+        return response.text();
+      })
+      .then(data => {
+        lyricsDisplay.innerText = "";
+        parseLyrics(data);
+        updateLyricsModeButton();
+      })
+.catch(err => {
+  console.warn("Sync lyrics unavailable, fallback to text lyrics.");
+  useSyncedLyrics = false;
+  userToggledLyricsMode = false; // 👈 permet de rebasculer en texte ensuite
+  lyricsDisplay.innerText = "Paroles synchronisées indisponibles. Affichage du mode texte.";
+  updateLyricsModeButton();
+  tryLoadTextLyrics();
+});
+
+    return;
+  }
+
+  // 3. Mode SYNC activé mais rien de dispo => message + fallback
+  if (useSyncedLyrics) {
+    useSyncedLyrics = false;
+    lyricsDisplay.innerText = "Paroles synchronisées indisponibles. Affichage du mode texte.";
+    updateLyricsModeButton();
+    tryLoadTextLyrics();
+    return;
+  }
+
+  // 4. Mode texte direct
+  tryLoadTextLyrics();
 }
 
 
 
 
+// Affiche la ligne de paroles courante synchronisée
+function displayLyricsLine(lineIndex) {
+  if (lyricsData.length === 0) {
+    lyricsDisplay.innerText = "Aucune parole disponible.";
+    return;
+  }
+  if(lineIndex < 0 || lineIndex >= lyricsData.length) return;
 
+  // Affiche la ligne courante, tu peux ici faire plus joli (ex: mettre en surbrillance)
+  lyricsDisplay.innerText = lyricsData[lineIndex].text;
+}
 
-    const audio = document.getElementById("audio");
-    const progress = document.getElementById("progress");
-    const nowPlaying = document.getElementById("now-playing");
-    const thumbnail = document.getElementById("thumbnail");
-    const playlistDiv = document.getElementById("playlist");
-    const playlistsSidebar = document.getElementById("playlistsSidebar");
-    const searchInput = document.getElementById("searchInput");
-    const playPauseBtn = document.getElementById("playPauseBtn");
-    const shuffleBtn = document.getElementById("shuffleBtn");
-    const repeatBtn = document.getElementById("repeatBtn");
-    const currentTimeEl = document.getElementById("currentTime");
-    const durationEl = document.getElementById("duration");
-
-    // Affiche la sidebar playlists
-    function displayPlaylistsSidebar() {
-      playlistsSidebar.innerHTML = "";
-      Object.keys(playlists).forEach(name => {
-        const div = document.createElement("div");
-        div.textContent = name;
-        div.classList.toggle("active", name === currentPlaylistName);
-        div.onclick = () => {
-          if(name !== currentPlaylistName) {
-            currentPlaylistName = name;
-            currentPlaylist = playlists[currentPlaylistName];
-            filteredPlaylist = [...currentPlaylist];
-            currentTrack = 0;
-            searchInput.value = "";
-            displayPlaylistsSidebar();
-            displayPlaylist();
-            playTrack(currentTrack);
-          }
-        };
-        playlistsSidebar.appendChild(div);
-      });
-    }
-
+// Gestion du clic sur la barre de progression
 const progressBar = document.querySelector('.progress-bar');
-const progressEl = document.getElementById('progress');
 let isDragging = false;
 
 progressBar.addEventListener('mousedown', (e) => {
   isDragging = true;
   seekFromEvent(e);
 });
-
 document.addEventListener('mousemove', (e) => {
-  if (isDragging) {
-    seekFromEvent(e);
-  }
+  if (isDragging) seekFromEvent(e);
 });
-
 document.addEventListener('mouseup', () => {
   isDragging = false;
 });
+
+// Pour tactile
+progressBar.addEventListener('touchstart', (e) => {
+  isDragging = true;
+  seekFromTouch(e);
+});
+document.addEventListener('touchmove', (e) => {
+  if (isDragging) seekFromTouch(e);
+});
+document.addEventListener('touchend', () => {
+  isDragging = false;
+});
+
+// Fonction pour touch
+function seekFromTouch(e) {
+  const rect = progressBar.getBoundingClientRect();
+  const touch = e.touches[0];
+  const percent = Math.min(Math.max(0, (touch.clientX - rect.left) / rect.width), 1);
+  audio.currentTime = percent * audio.duration;
+}
+
 
 function seekFromEvent(e) {
   const rect = progressBar.getBoundingClientRect();
@@ -719,166 +1358,289 @@ function seekFromEvent(e) {
   audio.currentTime = percent * audio.duration;
 }
 
+// Lecture d'une piste
+function playTrack(index) {
+  currentTrack = index;
+  const track = filteredPlaylist[index];
+  audio.src = track.url;
+  nowPlaying.innerText = `🎵 ${track.title}`;
+  thumbnail.src = track.img;
+  audio.play();
+  playPauseBtn.textContent = "⏸️";
 
-    // Afficher la playlist (filtered)
-    function displayPlaylist() {
-      playlistDiv.innerHTML = "";
-      filteredPlaylist.forEach((track, index) => {
-        const div = document.createElement("div");
-        div.className = "track";
-        if(index === currentTrack) div.classList.add("active");
-        div.innerText = track.title;
-        div.onclick = () => {
-          currentTrack = index;
-          playTrack(currentTrack);
-          updatePlaylistHighlight();
-        };
-        playlistDiv.appendChild(div);
-      });
-    }
+  displayLyrics(index);
+  updatePlaylistHighlight();
 
-    function updatePlaylistHighlight() {
-      const tracks = playlistDiv.querySelectorAll(".track");
-      tracks.forEach((t, i) => {
-        t.classList.toggle("active", i === currentTrack);
-      });
-    }
+  clearInterval(window.lyricsInterval); // évite les doublons si on change de chanson
+  if (track.isSynced) {
+    window.lyricsInterval = setInterval(() => {
+      if (!audio.paused) {
+        updateLyrics(audio.currentTime);
+      }
+    }, 500);
+  }
+}
 
-    function playTrack(index) {
-      currentTrack = index;
-      audio.src = filteredPlaylist[index].url;
-      nowPlaying.innerText = `🎵 ${filteredPlaylist[index].title}`;
-      thumbnail.src = filteredPlaylist[index].img;
-      audio.play();
-      playPauseBtn.textContent = "⏸️";
-  // Parse et affiche les paroles (reset)
-  if (filteredPlaylist[index].lyrics) {
-    parseLyrics(filteredPlaylist[index].lyrics);
-    displayLyricsLine(0);  // afficher la première ligne au départ
+
+
+// Bouton play/pause
+function togglePlay() {
+  if (!audio.src) return;
+  if (audio.paused) {
+    audio.play();
+    playPauseBtn.textContent = "⏸️";
   } else {
-    lyricsContainer.innerText = "Aucune parole disponible.";
+    audio.pause();
+    playPauseBtn.textContent = "▶️";
   }
+}
+
+// Lecture piste suivante
+function nextTrack() {
+  if (isShuffle) {
+    currentTrack = Math.floor(Math.random() * filteredPlaylist.length);
+  } else {
+    currentTrack = (currentTrack + 1) % filteredPlaylist.length;
+  }
+  playTrack(currentTrack);
+}
+
+// Lecture piste précédente
+function prevTrack() {
+  if (isShuffle) {
+    currentTrack = Math.floor(Math.random() * filteredPlaylist.length);
+  } else {
+    currentTrack = (currentTrack - 1 + filteredPlaylist.length) % filteredPlaylist.length;
+  }
+  playTrack(currentTrack);
+}
+
+// Shuffle toggle
+function toggleShuffle() {
+  isShuffle = !isShuffle;
+  shuffleBtn.classList.toggle("active", isShuffle);
+}
+
+// Repeat toggle
+function toggleRepeat() {
+  isRepeat = !isRepeat;
+  repeatBtn.classList.toggle("active", isRepeat);
+}
+
+// Volume
+function setVolume(value) {
+  audio.volume = value;
+}
+
+// Format temps (mm:ss)
+function formatTime(seconds) {
+  const min = Math.floor(seconds / 60);
+  const sec = Math.floor(seconds % 60);
+  return `${min}:${sec < 10 ? "0" + sec : sec}`;
 }
 
 
 
-    function togglePlay() {
-      if (!audio.src) return;
-      if (audio.paused) {
-        audio.play();
-        playPauseBtn.textContent = "⏸️";
-      } else {
-        audio.pause();
-        playPauseBtn.textContent = "▶️";
-      }
-    }
 
-    function nextTrack() {
-      if (isShuffle) {
-        currentTrack = Math.floor(Math.random() * filteredPlaylist.length);
-      } else {
-        currentTrack = (currentTrack + 1) % filteredPlaylist.length;
-      }
-      playTrack(currentTrack);
-      updatePlaylistHighlight();
-displayLyrics(index);
-    }
+function parseLyrics(lrcText) {
+  lyricsData = [];
 
-    function prevTrack() {
-      if (isShuffle) {
-        currentTrack = Math.floor(Math.random() * filteredPlaylist.length);
-      } else {
-        currentTrack = (currentTrack - 1 + filteredPlaylist.length) % filteredPlaylist.length;
-      }
-      playTrack(currentTrack);
-      updatePlaylistHighlight();
-displayLyrics(index);
-    }
+  const lines = lrcText.split('\n');
 
-    function toggleShuffle() {
-      isShuffle = !isShuffle;
-      shuffleBtn.classList.toggle("active", isShuffle);
-    }
+  for (let line of lines) {
+    const matches = [...line.matchAll(/\[(\d{2}):(\d{2})(?:\.(\d{2}))?\]/g)];
+    const text = line.replace(/\[.*?\]/g, '').trim(); // Supprime tous les timestamps
 
-    function toggleRepeat() {
-      isRepeat = !isRepeat;
-      repeatBtn.classList.toggle("active", isRepeat);
-    }
+    for (let match of matches) {
+      const min = parseInt(match[1]);
+      const sec = parseInt(match[2]);
+      const ms = match[3] ? parseInt(match[3]) : 0;
+      const time = min * 60 + sec + ms / 100;
 
-    function setVolume(value) {
-      audio.volume = value;
+      lyricsData.push({ time, text });
     }
-
-    function seek(event) {
-      const bar = event.currentTarget;
-      const clickPos = event.offsetX / bar.offsetWidth;
-      audio.currentTime = clickPos * audio.duration;
-    }
-
-    audio.ontimeupdate = () => {
-      if (audio.duration) {
-        const percent = (audio.currentTime / audio.duration) * 100;
-        progress.style.width = percent + "%";
-        currentTimeEl.textContent = formatTime(audio.currentTime);
-        durationEl.textContent = formatTime(audio.duration);
-    // Synchronisation des paroles
-    let currentLine = 0;
-    for (let i = 0; i < lyricsData.length; i++) {
-      if (audio.currentTime >= lyricsData[i].time) {
-        currentLine = i;
-      } else {
-        break;
-      }
-    }
-    displayLyricsLine(currentLine);
-      }
-    };
-
-function displayLyricsLine(lineIndex) {
-  if (lyricsData.length === 0) {
-    lyricsContainer.innerText = "Aucune parole disponible.";
-    return;
   }
-  // Afficher la ligne courante (tu peux aussi afficher 1-2 lignes avant/après si tu veux)
-  lyricsContainer.innerText = lyricsData[lineIndex].text;
+
+  // Tri des paroles par temps croissant
+  lyricsData.sort((a, b) => a.time - b.time);
 }
 
 
-    function formatTime(seconds) {
-      const min = Math.floor(seconds / 60);
-      const sec = Math.floor(seconds % 60);
-      return `${min}:${sec < 10 ? "0" + sec : sec}`;
-    }
+function updateLyrics(currentTime) {
+  if (!lyricsData || lyricsData.length === 0) return;
 
-    audio.onended = () => {
-      if (isRepeat) {
-        audio.currentTime = 0;
-        audio.play();
-      } else {
-        nextTrack();
-      }
-    };
-
-    searchInput.oninput = () => {
-      const term = searchInput.value.toLowerCase();
-      filteredPlaylist = currentPlaylist.filter(track =>
-        track.title.toLowerCase().includes(term)
-      );
-      currentTrack = 0;
-      displayPlaylist();
-    };
-
-
-audio.addEventListener("timeupdate", () => {
-  if (lyricsData.length === 0) return;
-  const currentTime = audio.currentTime;
-  for (let i = lyricsData.length - 1; i >= 0; i--) {
+  let currentLine = "";
+  for (let i = 0; i < lyricsData.length; i++) {
     if (currentTime >= lyricsData[i].time) {
-      lyricsContainer.innerText = lyricsData[i].text;
+      currentLine = lyricsData[i].text;
+    } else {
       break;
     }
   }
+
+  if (lyricsDisplay.innerText !== currentLine) {
+    lyricsDisplay.innerText = currentLine;
+  }
+}
+
+    function recommencerMusiqueActive() {
+      const audios = document.querySelectorAll('audio');
+      audios.forEach(audio => {
+        if (!audio.paused) {
+          audio.currentTime = 0;
+          audio.play();
+        }
+      });
+    }
+
+function toggleClearButton() {
+  const input = document.getElementById('searchInput');
+  const clearBtn = document.getElementById('clearSearch');
+  if (input.value.trim() !== '') {
+    clearBtn.style.display = 'block';
+  } else {
+    clearBtn.style.display = 'none';
+  }
+}
+
+
+function clearSearch() {
+  const input = document.getElementById('searchInput');
+  input.value = '';
+  toggleClearButton(); // ← re-vérifie l'affichage du bouton
+  input.focus();
+
+  // Réaffiche la playlist active
+  filteredPlaylist = [...currentPlaylist];
+  displayPlaylist();
+  updatePlaylistHighlight();
+}
+
+
+
+
+let playlistActive = null;
+
+function chargerPlaylist(playlist) {
+  playlistActive = playlist;
+  afficherMorceaux(playlist.morceaux);
+}
+
+function afficherMorceaux(morceaux) {
+  const container = document.getElementById('playlist');
+  container.innerHTML = '';
+
+  morceaux.forEach(morceau => {
+    const div = document.createElement('div');
+    div.className = 'track';
+    div.textContent = morceau.nom;
+    container.appendChild(div);
+  });
+}
+
+
+
+
+
+
+
+// Synchronisation temps et mise à jour UI
+audio.ontimeupdate = () => {
+  if (!audio.duration) return;
+
+  // Mise à jour barre de progression
+  const percent = (audio.currentTime / audio.duration) * 100;
+  progress.style.width = percent + "%";
+
+  // Mise à jour timer
+  currentTimeEl.textContent = formatTime(audio.currentTime);
+  durationEl.textContent = formatTime(audio.duration);
+
+  // Synchronisation paroles si piste sync
+  const track = filteredPlaylist[currentTrack];
+  if(track.isSynced && lyricsData.length > 0) {
+    // Cherche la ligne correspondant au temps actuel
+    for (let i = lyricsData.length -1; i >= 0; i--) {
+      if(audio.currentTime >= lyricsData[i].time) {
+        if(i !== currentLyricIndex) {
+          currentLyricIndex = i;
+          displayLyricsLine(i);
+        }
+        break;
+      }
+    }
+  }
+};
+
+// Fin de lecture
+audio.onended = () => {
+  if (isRepeat) {
+    audio.currentTime = 0;
+    audio.play();
+  } else {
+    nextTrack();
+  }
+};
+
+// Recherche dans playlist
+searchInput.oninput = () => {
+  const term = searchInput.value.toLowerCase();
+
+  if (term === "") {
+    // Si recherche vide, on remet la playlist actuelle
+    filteredPlaylist = [...currentPlaylist];
+  } else {
+    // Sinon, on filtre toutes les pistes existantes
+    filteredPlaylist = allTracks.filter(track =>
+      track.title.toLowerCase().includes(term)
+    );
+  }
+
+  // ⚠️ NE PAS toucher à currentTrack, ni lancer playTrack
+
+  displayPlaylist(); // Juste mettre à jour l’affichage visuel
+  updatePlaylistHighlight(); // Pour garder le bon élément visuellement actif
+
+  // Si aucun résultat, on affiche un message optionnel
+if (filteredPlaylist.length === 0) {
+  playlistDiv.innerHTML = "<div style='padding: 10px; opacity: 0.6'>Aucun résultat</div>";
+}
+};
+
+
+const sidebar = document.querySelector('.playlists-sidebar');
+
+let touchStartX = 0;
+let touchEndX = 0;
+
+document.addEventListener('touchstart', e => {
+  touchStartX = e.changedTouches[0].screenX;
 });
+
+document.addEventListener('touchend', e => {
+  touchEndX = e.changedTouches[0].screenX;
+  handleGesture();
+});
+
+function handleGesture() {
+  const swipeDistance = touchEndX - touchStartX;
+
+  if (swipeDistance > 50) {
+    sidebar.classList.add('open');
+  } else if (swipeDistance < -50) {
+    sidebar.classList.remove('open');
+  }
+}
+
+
+
+
+
+// Initialisation interface
+displayPlaylistsSidebar();
+displayPlaylist();
+playTrack(currentTrack);
+
 
 
     // Initialisation
